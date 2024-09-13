@@ -164,6 +164,7 @@ turtle.forward(2 * DIFF_Y)
 turtle.left(ANGLE)
 turtle.forward(DIFF_X)
 turtle.end_fill()
+
 # turtle.shape("turtle")
 # turtle.penup()
 # turtle.right(100)
