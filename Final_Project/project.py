@@ -19,6 +19,7 @@ features:
 # Import part
 import os
 import json
+import sys
 
 # Constant variable
 OPTION = ["V", "D", "A", "Q",
@@ -40,14 +41,15 @@ DATA = {}
 KEY = ""
 
 # bool state
-is_folder_created = False
-is_login = False
+IS_LOGIN = False
+IS_FOLDER_CREATED = False
 
 # Command
 CLEAR_SCREEN = ""
 
 
-def welcome() -> None:
+def welcome():
+    """ NEVERGONNAGIVEU UP NEVERGONNALET U DOWN"""
     os.system(CLEAR_SCREEN)
     print(r"""
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -90,7 +92,8 @@ def welcome() -> None:
   |_| \___/ \___/|_| \_\ |_| /_/   \_\____/____/  \_/\_/  \___/|_| \_\____/ """)
 
 
-def quit() -> None:
+def quit_the_program():
+    """ THANK YOU """
     os.system(CLEAR_SCREEN)
     print(r"""
  _____ _   _    _    _   _ _  __ __   _____  _   _ _ _ _
@@ -104,11 +107,11 @@ def quit() -> None:
     `-.-' \ )-`( , o o)
           `-    \`_`"'-
 """)
-    exit()
+    sys.exit()
 
 
-def add_password() -> None:
-    global DATA
+def add_password():
+    """ ADD username and password """
 
     os.system(CLEAR_SCREEN)
 
@@ -127,11 +130,13 @@ def add_password() -> None:
     # TODO: in one website can contains many username and password
 
 
-def delete_password() -> None:
-    pass
+def delete_password():
+    """Delete from database """
 
 
-def view_password() -> None:
+def view_password():
+    """create an table to show you all password"""
+
     # table that will show your password
     def create_ascii_table(headers, rows) -> None:
         colum_width = []
@@ -186,54 +191,47 @@ def view_password() -> None:
 
     create_ascii_table(headers, row)
 
-    print(f"\nWhich password do you want to show?")
+    print("\nWhich password do you want to show?")
     select = input("Enter password name or number: ")
 
     # TODO: to select name to show password
 
 
-def initial_data() -> None:
-    global is_folder_created
-    global USER_OS
-    global CLEAR_SCREEN
-    global DATA
-    global KEY
+def initial_data():
+    """ function intialize data before run everythingelse """
 
     # inital_OS
     if os.name == "nt":
-        USER_OS = "WINDOW"
+        user_os = "WINDOW"
 
     elif os.name == "posix":
-        USER_OS = "UNIX"
+        user_os = "UNIX"
 
     # Load data
+    data, key = None, None
     if os.path.exists(PASSWORD_FILE):
         with open(PASSWORD_FILE, "r", encoding="utf-8") as file:
-            DATA = json.load(file)
+            data = json.load(file)
 
     if os.path.exists(KEY_FILE):
-        with open(KEY_FILE, "r") as file:
-            KEY = file.read()
+        with open(KEY_FILE, "r", encoding="utf-8") as file:
+            key = file.read()
 
-    # initail command base on USER_OS
-    if USER_OS == "WINDOW":
-        CLEAR_SCREEN = "cls"
+    # initail command base on user_os
+    if user_os == "WINDOW":
+        clear_screeen = "cls"
 
-    if USER_OS == "UNIX":
-        CLEAR_SCREEN = "clear"
+    if user_os == "UNIX":
+        clear_screeen = "clear"
+
+    return [user_os, clear_screeen, data, key]
 
 
-def option() -> None:
-    global is_login
-    global is_folder_created
-
-    if not is_login:
-        user_password = input("Please login: ")
-        login(user_password)
-        is_login = True
+def option():
+    """ main function to select action to do """
 
     # Already have folder and already login
-    while is_folder_created and is_login:
+    while IS_FOLDER_CREATED and IS_LOGIN:
 
         print("\nWhat do you want to do?")
         print("""
@@ -243,39 +241,36 @@ def option() -> None:
                 (Q)uit""")
 
         user_option = input().upper()
-        if not (user_option in OPTION):
+        if not user_option in OPTION:
             print("It is NOT in choices!!!")
             input("PLEASE TYPE ANYTHING TO CONTINUE")
             os.system(CLEAR_SCREEN)
 
-        if (user_option == "V") or (user_option == "VIEW"):
+        if user_option in ("V", "VEIW"):
             view_password()
 
-        if (user_option == "A") or (user_option == "ADD"):
+        if user_option in ("A", "ADD"):
             add_password()
 
-        if (user_option == "D") or (user_option == "DELETE"):
+        if user_option in ("D", "DELETE"):
             delete_password()
 
-        if (user_option == "Q") or (user_option == "QUIT"):
+        if user_option in ("Q", "QUIT"):
             update_json()
-            quit()
-            return
+            quit_the_program()
 
 
-def first_time() -> None:
-    global is_folder_created
-    global is_login
-    global DATA
-    global KEY
+def first_time():
+    """
+        When user use this program first time
+        we need to collect password for this program and create Key, folder, etc.
+    """
 
+    is_folder_created = False
     # Check whether is there folader yet?
     if os.path.exists(PATH_TO_STORE) and os.path.isdir(PATH_TO_STORE):
         is_folder_created = True
         # print("DEBUG: Folder exists")
-    else:
-        # print("DEBUG: Folder does not exist")
-        pass
 
     # Create folder if user used for first time
     if not is_folder_created:
@@ -283,23 +278,15 @@ def first_time() -> None:
         print("Do you want to create Folder (y)es/(n)o")
 
         user_option = input().upper()
-
-        if user_option == "Y" or user_option == "YES":
-            user_password = input("Please create new password: ")
-            again_password = input("Again please: ")
-
-            if user_password != again_password:
-                input("Wrong! Please try again")
-                quit()
-                return
+        if user_option in ("Y", "YES"):
 
             # user already signin, next step is create folder
             os.system("mkdir .vetit")
 
             # generate_key for decryption
-            KEY = "vetuay" * 1000
-            with open(KEY_FILE, "w") as file:
-                file.write(KEY)
+            key = "vetuay" * 1000
+            with open(KEY_FILE, "w", encoding="utf-8") as file:
+                file.write(key)
 
             # for Window make folder hidden
             if USER_OS == "WINDOW":
@@ -310,30 +297,21 @@ def first_time() -> None:
                 # print("DEBUG: Folder exists")
                 is_folder_created = True
 
-            # save user password
-            user_newfile = PASSWORD_FILE
-            json_format = {
-                "userpassword": encrypt(user_password)
-            }
-            with open(user_newfile, "w", encoding="utf-8") as file:
-                json.dump(json_format, file, ensure_ascii=False)
-
         else:
             user_option = input(
                 "Sorry, We CANNOT start without initail folder")
-            quit()
+            quit_the_program()
+
+    return is_folder_created
 
 
-# TODO: Test encrypt and decrypt
 def encrypt(plain):
-    global KEY
-    # TODO: implement this one
-    # secret !!!
+    """ SECRET """
     cipher = ""
     alphabet = "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
 
-    for i in range(len(plain)):
-        cipher += chr(ord(plain[i]) ^ ord(KEY[i]))
+    for i, character in enumerate(plain):
+        cipher += chr(ord(character) ^ ord(KEY[i]))
 
     cipher = "".join([str(hex(ord(i))[2:]) for i in cipher])
     cipher = int(cipher, 16)
@@ -349,9 +327,8 @@ def encrypt(plain):
     return result
 
 
-def decrypt(cipher) -> str:
-    global KEY
-    # TODO: implement this one
+def decrypt(cipher):
+    """ SECRET """
     plain = ""
     alphabet = "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
     alphabet_l = len(alphabet)
@@ -359,27 +336,48 @@ def decrypt(cipher) -> str:
     cipher = cipher[2:]
 
     tmp = 0
-    for i in range(len(cipher)):
-        tmp += (alphabet_l ** i) * alphabet.index(cipher[i])
+    for i, character in enumerate(cipher):
+        tmp += (alphabet_l ** i) * alphabet.index(character)
     tmp = hex(tmp)[2:]
 
     fake_plain = ""
     for i in range(0, len(tmp), 2):
         fake_plain += chr(int(tmp[0 + i:2 + i], 16))
 
-    for i in range(len(fake_plain)):
-        plain += chr(ord(fake_plain[i]) ^ ord(KEY[i]))
+    for i, character in enumerate(fake_plain):
+        plain += chr(ord(character) ^ ord(KEY[i]))
 
     return plain
 
 
-def login(password) -> None:
-    # login second time check whether password is as same as before
-    user_p = decrypt(DATA["userpassword"])
+def login():
+    """ login second time check whether password is as same as before """
 
-    if password != user_p:
+    # user first time
+    if not (os.path.exists(PASSWORD_FILE) or os.path.isfile(PASSWORD_FILE)):
+        user_password = input("Please create new password: ")
+        again_password = input("Confirm again: ")
+
+        if user_password != again_password:
+            input("Wrong! Please try again")
+            quit_the_program()
+
+        # save user password
+        user_newfile = PASSWORD_FILE
+        json_format = {
+            "userpassword": encrypt(user_password)
+        }
+        with open(user_newfile, "w", encoding="utf-8") as file:
+            json.dump(json_format, file, indent=4, ensure_ascii=False)
+
+        return True
+
+    user_password = input("Please login: ")
+    password = decrypt(DATA["userpassword"])
+
+    if password != user_password:
         os.system(CLEAR_SCREEN)
-        print(r"""__        ______   ___  _   _  ____                
+        print(r"""__        ______   ___  _   _  ____
 \ \      / /  _ \ / _ \| \ | |/ ___|               
  \ \ /\ / /| |_) | | | |  \| | |  _                
   \ V  V / |  _ <| |_| | |\  | |_| |               
@@ -390,16 +388,27 @@ def login(password) -> None:
   |_| |_| \_\|_|   /_/   \_\____/_/   \_\___|_| \_|""")
 
         input("Type any key to continue")
-        exit()
+        sys.exit()
+
+    return True
 
 
 def update_json():
+    """ update file password before end program """
+
+    if USER_OS == "WINDOW":
+        os.system(f"attrib -h {PASSWORD_FILE}")
+
     with open(PASSWORD_FILE, "w", encoding="utf-8") as file:
         json.dump(DATA, file, indent=4, ensure_ascii=False)
+
+    if USER_OS == "WINDOW":
+        os.system(f"attrib +h {PASSWORD_FILE}")
 
 
 if __name__ == "__main__":
     welcome()
-    first_time()
-    initial_data()
+    IS_FOLDER_CREATED = first_time()
+    USER_OS, CLEAR_SCREEN, DATA, KEY = initial_data()
+    IS_LOGIN = login()
     option()
