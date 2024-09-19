@@ -19,8 +19,6 @@ features:
 # Import part
 import os
 import json
-from pathlib import Path
-import subprocess
 
 # Constant variable
 OPTION = ["V", "D", "A", "Q",
@@ -28,11 +26,18 @@ OPTION = ["V", "D", "A", "Q",
           ]
 
 # folder
-CURRENT_DIR = Path(__file__).parent
+CURRENT_DIR = os.getcwd()
 FOLDER_NAME = ".vetit"
-PATH_TO_STORE = Path(CURRENT_DIR / FOLDER_NAME)
+PATH_TO_STORE = CURRENT_DIR + "/" + FOLDER_NAME
+PASSWORD_FILE = PATH_TO_STORE + "/.userpassword.json"
+KEY_FILE = PATH_TO_STORE + "/.secret_key.key"
+
+# OS
 USER_OS = None
+
+# DATA
 DATA = {}
+KEY = ""
 
 # bool state
 is_folder_created = False
@@ -103,13 +108,23 @@ def quit() -> None:
 
 
 def add_password() -> None:
+    global DATA
+
     os.system(CLEAR_SCREEN)
 
-    website = input("Please enter name of website: ")
+    website = input("Please enter name of website: ").lower()
     username = input("Please enter username: ")
     password = input("Please enter password: ")
 
-    # TODO: collect data in JSON Format!?
+    data_injson = {
+        website: {
+            "username": username,
+            "password": encrypt(password)
+        },
+    }
+    DATA.update(data_injson)
+
+    # TODO: in one website can contains many username and password
 
 
 def delete_password() -> None:
@@ -117,12 +132,6 @@ def delete_password() -> None:
 
 
 def view_password() -> None:
-    # if there are not .vetit folder
-    if not any(PATH_TO_STORE.iterdir()):
-        os.system(CLEAR_SCREEN)
-        print("There is notthing to show!!")
-        return
-
     # table that will show your password
     def create_ascii_table(headers, rows) -> None:
         colum_width = []
@@ -166,6 +175,7 @@ def view_password() -> None:
 
     os.system(CLEAR_SCREEN)
 
+    # TODO: show pass word and username from JSON files
     # name of each column
     headers = ["Website", "Username", "Password"]
 
@@ -187,6 +197,7 @@ def initial_data() -> None:
     global USER_OS
     global CLEAR_SCREEN
     global DATA
+    global KEY
 
     # inital_OS
     if os.name == "nt":
@@ -195,18 +206,14 @@ def initial_data() -> None:
     elif os.name == "posix":
         USER_OS = "UNIX"
 
-    # Check whether is there folader yet?
-    if PATH_TO_STORE.exists() and PATH_TO_STORE.is_dir():
-        is_folder_created = True
-        # print("DEBUG: Folder exists")
-    else:
-        # print("DEBUG: Folder does not exist")
-        pass
-
     # Load data
-    if (PATH_TO_STORE / "userpassword.json"):
-        with open("userpassword.json", "r") as file:
+    if os.path.exists(PASSWORD_FILE):
+        with open(PASSWORD_FILE, "r", encoding="utf-8") as file:
             DATA = json.load(file)
+
+    if os.path.exists(KEY_FILE):
+        with open(KEY_FILE, "r") as file:
+            KEY = file.read()
 
     # initail command base on USER_OS
     if USER_OS == "WINDOW":
@@ -217,51 +224,8 @@ def initial_data() -> None:
 
 
 def option() -> None:
-    global is_folder_created
     global is_login
-
-    # Create folder if user used for first time
-    if not is_folder_created:
-        print("It looks like your first time")
-        print("Do you want to create Folder (y)es/(n)o")
-
-        user_option = input().upper()
-
-        if user_option == "Y" or user_option == "YES":
-            user_password = input("Please create new password: ")
-            again_password = input("Again please: ")
-
-            if user_password != again_password:
-                input("Wrong! Please try again")
-                quit()
-                return
-
-            # user already signin, next step is create folder
-            os.system("mkdir .vetit")
-
-            # TODO:generate_key for decryption
-
-            # for Window make folder hidden
-            if USER_OS == "WINDOW":
-                subprocess.run(["attrib", "+h", PATH_TO_STORE])
-
-            # change state to true
-            if PATH_TO_STORE.exists() and PATH_TO_STORE.is_dir():
-                # print("DEBUG: Folder exists")
-                is_folder_created = True
-
-            # save user password
-            user_newfile = PATH_TO_STORE / "userpassword.json"
-            json_format = {
-                "userpassword": user_password
-            }
-            with open(user_newfile, "w") as file:
-                json.dump(json_format, file)
-
-        else:
-            user_option = input(
-                "Sorry, We CANNOT start without initail folder")
-            quit()
+    global is_folder_created
 
     if not is_login:
         user_password = input("Please login: ")
@@ -294,27 +258,124 @@ def option() -> None:
             delete_password()
 
         if (user_option == "Q") or (user_option == "QUIT"):
+            update_json()
             quit()
             return
 
 
+def first_time() -> None:
+    global is_folder_created
+    global is_login
+    global DATA
+    global KEY
+
+    # Check whether is there folader yet?
+    if os.path.exists(PATH_TO_STORE) and os.path.isdir(PATH_TO_STORE):
+        is_folder_created = True
+        # print("DEBUG: Folder exists")
+    else:
+        # print("DEBUG: Folder does not exist")
+        pass
+
+    # Create folder if user used for first time
+    if not is_folder_created:
+        print("It looks like your first time")
+        print("Do you want to create Folder (y)es/(n)o")
+
+        user_option = input().upper()
+
+        if user_option == "Y" or user_option == "YES":
+            user_password = input("Please create new password: ")
+            again_password = input("Again please: ")
+
+            if user_password != again_password:
+                input("Wrong! Please try again")
+                quit()
+                return
+
+            # user already signin, next step is create folder
+            os.system("mkdir .vetit")
+
+            # generate_key for decryption
+            KEY = "vetuay" * 1000
+            with open(KEY_FILE, "w") as file:
+                file.write(KEY)
+
+            # for Window make folder hidden
+            if USER_OS == "WINDOW":
+                os.system(f"attrib +h {PATH_TO_STORE}")
+
+            # change state to true
+            if os.path.exists(PATH_TO_STORE) and os.path.isdir(PATH_TO_STORE):
+                # print("DEBUG: Folder exists")
+                is_folder_created = True
+
+            # save user password
+            user_newfile = PASSWORD_FILE
+            json_format = {
+                "userpassword": encrypt(user_password)
+            }
+            with open(user_newfile, "w", encoding="utf-8") as file:
+                json.dump(json_format, file, ensure_ascii=False)
+
+        else:
+            user_option = input(
+                "Sorry, We CANNOT start without initail folder")
+            quit()
+
+
 # TODO: Test encrypt and decrypt
-def encrypt(plain) -> str:
-    pass
+def encrypt(plain):
+    global KEY
     # TODO: implement this one
-    # XOR first
-    # ge it to realbase64
-    # using กขคงจ
+    # secret !!!
+    cipher = ""
+    alphabet = "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
+
+    for i in range(len(plain)):
+        cipher += chr(ord(plain[i]) ^ ord(KEY[i]))
+
+    cipher = "".join([str(hex(ord(i))[2:]) for i in cipher])
+    cipher = int(cipher, 16)
+
+    result = ""
+    alphabet_l = len(alphabet)
+    while cipher != 0:
+        result += alphabet[cipher % alphabet_l]
+        cipher //= alphabet_l
+    result = result[::-1]
+    result += "=="
+
+    return result
 
 
 def decrypt(cipher) -> str:
-    pass
+    global KEY
     # TODO: implement this one
+    plain = ""
+    alphabet = "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
+    alphabet_l = len(alphabet)
+    cipher = cipher[::-1]
+    cipher = cipher[2:]
+
+    tmp = 0
+    for i in range(len(cipher)):
+        tmp += (alphabet_l ** i) * alphabet.index(cipher[i])
+    tmp = hex(tmp)[2:]
+
+    fake_plain = ""
+    for i in range(0, len(tmp), 2):
+        fake_plain += chr(int(tmp[0 + i:2 + i], 16))
+
+    for i in range(len(fake_plain)):
+        plain += chr(ord(fake_plain[i]) ^ ord(KEY[i]))
+
+    return plain
 
 
 def login(password) -> None:
     # login second time check whether password is as same as before
-    user_p = DATA["userpassword"]
+    user_p = decrypt(DATA["userpassword"])
 
     if password != user_p:
         os.system(CLEAR_SCREEN)
@@ -332,7 +393,13 @@ def login(password) -> None:
         exit()
 
 
+def update_json():
+    with open(PASSWORD_FILE, "w", encoding="utf-8") as file:
+        json.dump(DATA, file, indent=4, ensure_ascii=False)
+
+
 if __name__ == "__main__":
-    initial_data()
     welcome()
+    first_time()
+    initial_data()
     option()
