@@ -18,9 +18,9 @@ features:
 
 # Import part
 import os
+import json
 from pathlib import Path
 import subprocess
-from cryptography.fernet import Fernet
 
 # Constant variable
 OPTION = ["V", "D", "A", "Q",
@@ -32,6 +32,7 @@ CURRENT_DIR = Path(__file__).parent
 FOLDER_NAME = ".vetit"
 PATH_TO_STORE = Path(CURRENT_DIR / FOLDER_NAME)
 USER_OS = None
+DATA = {}
 
 # bool state
 is_folder_created = False
@@ -108,8 +109,7 @@ def add_password() -> None:
     username = input("Please enter username: ")
     password = input("Please enter password: ")
 
-    # TODO: put all of information to file
-    # TODO: encrypt password before put it
+    # TODO: collect data in JSON Format!?
 
 
 def delete_password() -> None:
@@ -169,22 +169,9 @@ def view_password() -> None:
     # name of each column
     headers = ["Website", "Username", "Password"]
 
-    # all file name without extension
-    files = [f.stem for f in PATH_TO_STORE.iterdir() if f.is_file()]
-
-    # all passwords
-    passwords = []
-    for file in PATH_TO_STORE.iterdir():
-        if not file.is_file():
-            continue
-
-        passwords.append(file.read_text())
-
-    # <--------- TODO: username
-
     # should create tabel like this
     row = [
-        [file, "username", "Hide"] for file in files
+        ["somefile", "username", "Hide"]
     ]
 
     create_ascii_table(headers, row)
@@ -192,36 +179,14 @@ def view_password() -> None:
     print(f"\nWhich password do you want to show?")
     select = input("Enter password name or number: ")
 
-    # check whether input is number or name
-    # if Input is number
-    if select.isdigit():
-        select = int(select) - 1
-
-        if select >= len(row):
-            os.system(CLEAR_SCREEN)
-            print("Not in list try agian!")
-            return
-
-        os.system(CLEAR_SCREEN)
-        row[select][1] = passwords[select]
-
-    # if input is name
-    else:
-        for i, name in enumerate(row):
-            if select not in name:
-                print("Not in list")
-                return
-            elif select == name[0]:
-                row[i][1] = passwords[i]
-                os.system(CLEAR_SCREEN)
-
-    create_ascii_table(headers, row)
+    # TODO: to select name to show password
 
 
 def initial_data() -> None:
     global is_folder_created
     global USER_OS
     global CLEAR_SCREEN
+    global DATA
 
     # inital_OS
     if os.name == "nt":
@@ -230,8 +195,6 @@ def initial_data() -> None:
     elif os.name == "posix":
         USER_OS = "UNIX"
 
-    # print("DEBUG: ", USER_OS)
-
     # Check whether is there folader yet?
     if PATH_TO_STORE.exists() and PATH_TO_STORE.is_dir():
         is_folder_created = True
@@ -239,6 +202,11 @@ def initial_data() -> None:
     else:
         # print("DEBUG: Folder does not exist")
         pass
+
+    # Load data
+    if (PATH_TO_STORE / "userpassword.json"):
+        with open("userpassword.json", "r") as file:
+            DATA = json.load(file)
 
     # initail command base on USER_OS
     if USER_OS == "WINDOW":
@@ -257,9 +225,9 @@ def option() -> None:
         print("It looks like your first time")
         print("Do you want to create Folder (y)es/(n)o")
 
-        user_option = input().lower()
+        user_option = input().upper()
 
-        if user_option == "y" or user_option == "yes":
+        if user_option == "Y" or user_option == "YES":
             user_password = input("Please create new password: ")
             again_password = input("Again please: ")
 
@@ -271,10 +239,7 @@ def option() -> None:
             # user already signin, next step is create folder
             os.system("mkdir .vetit")
 
-            # generate_key for decryption
-            key = Fernet.generate_key()
-            with open(PATH_TO_STORE / "key.key", "wb") as file:
-                file.write(key)
+            # TODO:generate_key for decryption
 
             # for Window make folder hidden
             if USER_OS == "WINDOW":
@@ -286,9 +251,12 @@ def option() -> None:
                 is_folder_created = True
 
             # save user password
-            user_newfile = PATH_TO_STORE / "userpassword.txt"
+            user_newfile = PATH_TO_STORE / "userpassword.json"
+            json_format = {
+                "userpassword": user_password
+            }
             with open(user_newfile, "w") as file:
-                file.write(user_password)
+                json.dump(json_format, file)
 
         else:
             user_option = input(
@@ -331,38 +299,22 @@ def option() -> None:
 
 
 # TODO: Test encrypt and decrypt
-def encrypt(plain) -> bytes:
-
-    # read a key
-    key = ""
-    with open(PATH_TO_STORE / "key.key", "rb") as file:
-        key = file.read()
-
-    # encrypt
-    fernet = Fernet(key)
-    encrypt_data = fernet.encrypt(bytes(plain))
-
-    return encrypt_data
+def encrypt(plain) -> str:
+    pass
+    # TODO: implement this one
+    # XOR first
+    # ge it to realbase64
+    # using กขคงจ
 
 
 def decrypt(cipher) -> str:
-    # read a key
-    key = ""
-    with open(PATH_TO_STORE / "key.key", "rb") as file:
-        key = file.read()
-
-    # decrypt
-    fernet = Fernet(key)
-    decrypt_data = fernet.decrypt(cipher)
-
-    return str(decrypt_data)
+    pass
+    # TODO: implement this one
 
 
 def login(password) -> None:
     # login second time check whether password is as same as before
-    user_p = ""
-    with open(f"{PATH_TO_STORE}/userpassword.txt", "r") as file:
-        user_p = file.readline()
+    user_p = DATA["userpassword"]
 
     if password != user_p:
         os.system(CLEAR_SCREEN)
