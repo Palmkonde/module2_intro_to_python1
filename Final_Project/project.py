@@ -180,8 +180,6 @@ def view_password():
 
     os.system(CLEAR_SCREEN)
 
-    # TODO: show pass word and username from JSON files
-
     # name of each column
     headers = ["Website", "Username", "Password"]
 
