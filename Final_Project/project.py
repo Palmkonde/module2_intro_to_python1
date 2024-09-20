@@ -181,20 +181,41 @@ def view_password():
     os.system(CLEAR_SCREEN)
 
     # TODO: show pass word and username from JSON files
+
     # name of each column
     headers = ["Website", "Username", "Password"]
 
     # should create tabel like this
-    row = [
-        ["somefile", "username", "Hide"]
-    ]
+    row = []
+    passwords = []
+    for website, data in DATA.items():
+        if website == "userpassword":
+            continue
+
+        username = data["username"]
+        passwords.append(data["password"])
+        row.append([website, username, "Hide"])
 
     create_ascii_table(headers, row)
 
     print("\nWhich password do you want to show?")
-    select = input("Enter password name or number: ")
+    select = input("Enter website name or number: ")
 
-    # TODO: to select name to show password
+    if select.isdigit() and (1 <= int(select) <= len(row)):
+        select = int(select) - 1
+        row[select][2] = decrypt(passwords[select])
+
+    elif select in DATA:
+        for i, name in enumerate(row):
+            if select == name[0]:
+                name[2] = decrypt(passwords[i])
+
+    else:
+        print("Not in choice! Try agin")
+        return
+
+    os.system(CLEAR_SCREEN)
+    create_ascii_table(headers, row)
 
 
 def initial_data():
@@ -208,14 +229,10 @@ def initial_data():
         user_os = "UNIX"
 
     # Load data
-    data, key = None, None
+    data = None
     if os.path.exists(PASSWORD_FILE):
         with open(PASSWORD_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
-
-    if os.path.exists(KEY_FILE):
-        with open(KEY_FILE, "r", encoding="utf-8") as file:
-            key = file.read()
 
     # initail command base on user_os
     if user_os == "WINDOW":
@@ -224,11 +241,13 @@ def initial_data():
     if user_os == "UNIX":
         clear_screeen = "clear"
 
-    return [user_os, clear_screeen, data, key]
+    return [user_os, clear_screeen, data]
 
 
 def option():
     """ main function to select action to do """
+
+    os.system(CLEAR_SCREEN)
 
     # Already have folder and already login
     while IS_FOLDER_CREATED and IS_LOGIN:
@@ -307,13 +326,17 @@ def first_time():
 
 def encrypt(plain):
     """ SECRET """
-    cipher = ""
+
+    with open(KEY_FILE, "r", encoding="utf-8") as file:
+        key = file.readline()
+
+    cipher = []
     alphabet = "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
 
     for i, character in enumerate(plain):
-        cipher += chr(ord(character) ^ ord(KEY[i]))
+        cipher += chr(ord(character) ^ ord(key[i]))
 
-    cipher = "".join([str(hex(ord(i))[2:]) for i in cipher])
+    cipher = "".join([hex(ord(i))[2:].zfill(2) for i in cipher])
     cipher = int(cipher, 16)
 
     result = ""
@@ -329,6 +352,10 @@ def encrypt(plain):
 
 def decrypt(cipher):
     """ SECRET """
+
+    with open(KEY_FILE, "r", encoding="utf-8") as file:
+        key = file.readline()
+
     plain = ""
     alphabet = "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
     alphabet_l = len(alphabet)
@@ -340,12 +367,12 @@ def decrypt(cipher):
         tmp += (alphabet_l ** i) * alphabet.index(character)
     tmp = hex(tmp)[2:]
 
-    fake_plain = ""
+    fake_plain = []
     for i in range(0, len(tmp), 2):
-        fake_plain += chr(int(tmp[0 + i:2 + i], 16))
+        fake_plain.append(int(tmp[i:i + 2], 16))
 
     for i, character in enumerate(fake_plain):
-        plain += chr(ord(character) ^ ord(KEY[i]))
+        plain += chr(character ^ ord(key[i]))
 
     return plain
 
@@ -362,20 +389,12 @@ def login():
             input("Wrong! Please try again")
             quit_the_program()
 
-        # save user password
-        user_newfile = PASSWORD_FILE
-        json_format = {
-            "userpassword": encrypt(user_password)
-        }
-        with open(user_newfile, "w", encoding="utf-8") as file:
-            json.dump(json_format, file, indent=4, ensure_ascii=False)
-
-        return True
+        return True, user_password
 
     user_password = input("Please login: ")
-    password = decrypt(DATA["userpassword"])
+    stored_password = decrypt(DATA["userpassword"])
 
-    if password != user_password:
+    if stored_password != user_password:
         os.system(CLEAR_SCREEN)
         print(r"""__        ______   ___  _   _  ____
 \ \      / /  _ \ / _ \| \ | |/ ___|               
@@ -390,7 +409,7 @@ def login():
         input("Type any key to continue")
         sys.exit()
 
-    return True
+    return True, None
 
 
 def update_json():
@@ -409,6 +428,13 @@ def update_json():
 if __name__ == "__main__":
     welcome()
     IS_FOLDER_CREATED = first_time()
-    USER_OS, CLEAR_SCREEN, DATA, KEY = initial_data()
-    IS_LOGIN = login()
+    USER_OS, CLEAR_SCREEN, DATA = initial_data()
+    IS_LOGIN, intial_password = login()
+
+    # mean it's user first time
+    if intial_password:
+        DATA = {
+            "userpassword": encrypt(intial_password)
+        }
+
     option()
