@@ -130,54 +130,88 @@ def add_password():
     # TODO: in one website can contains many username and password
 
 
+def create_ascii_table(headers, rows) -> None:
+    """ table that will show your password """
+
+    colum_width = []
+    for i, col in enumerate(zip(headers, *rows)):
+        maximum_width = -1
+
+        for number, row in enumerate(col, 1):
+            tmp_num = ""
+            if i == 0:  # if it's a first column
+                tmp_num = str(number) + "."
+            maximum_width = max(
+                len(str(row)) + len(tmp_num), maximum_width)
+
+        colum_width.append(maximum_width)
+
+    # top
+    hon_line = "+".join(("-" * (col_w + 2) for col_w in colum_width))
+    hon_line = "+" + hon_line + "+"
+    print(hon_line)
+
+    # Colum name
+    for head, col_w in zip(headers, colum_width):
+        col_name = "| " + f"{head:^{col_w}} "
+        print(col_name, end="")
+    print("|")
+    print(hon_line)
+
+    # each row
+    for number, row in enumerate(rows, 1):
+        for i, (data, col_w) in enumerate(zip(row, colum_width)):
+            # if it is first colum
+            if i == 0:
+                row_data = "| " + f"{number} {data:<{col_w-1}}"
+            else:
+                row_data = "| " + f"{data:<{col_w}} "
+            print(row_data, end="")
+        print("|")
+
+    # bot
+    print(hon_line)
+
+
 def delete_password():
     """Delete from database """
+    os.system(CLEAR_SCREEN)
+
+    # name of each column
+    headers = ["Website", "Username", "Password"]
+
+    # should create tabel like this
+    row = []
+    passwords = []
+    for website, data in DATA.items():
+        if website == "userpassword":
+            continue
+
+        username = data["username"]
+        passwords.append(data["password"])
+        row.append([website, username, "Hide"])
+
+    create_ascii_table(headers, row)
+
+    print("Which password do you want to delete?")
+    select = input("Please enter a name or number: ")
+
+    if select.isdigit() and (1 <= int(select) <= len(row)):
+        select = int(select) - 1
+        DATA.pop(row[select][0])
+
+    elif select in DATA:
+        DATA.pop(select)
+    else:
+        print("Not in choice! Try again")
+        return
+
+    os.system(CLEAR_SCREEN)
+    print(f"{row[select][0]}'s deleted")
 
 
 def view_password():
     """create an table to show you all password"""
-
-    # table that will show your password
-    def create_ascii_table(headers, rows) -> None:
-        colum_width = []
-        for i, col in enumerate(zip(headers, *rows)):
-            maximum_width = -1
-
-            for number, row in enumerate(col, 1):
-                tmp_num = ""
-                if i == 0:  # if it's a first column
-                    tmp_num = str(number) + "."
-                maximum_width = max(
-                    len(str(row)) + len(tmp_num), maximum_width)
-
-            colum_width.append(maximum_width)
-
-        # top
-        hon_line = "+".join(("-" * (col_w + 2) for col_w in colum_width))
-        hon_line = "+" + hon_line + "+"
-        print(hon_line)
-
-        # Colum name
-        for head, col_w in zip(headers, colum_width):
-            col_name = "| " + f"{head:^{col_w}} "
-            print(col_name, end="")
-        print("|")
-        print(hon_line)
-
-        # each row
-        for number, row in enumerate(rows, 1):
-            for i, (data, col_w) in enumerate(zip(row, colum_width)):
-                # if it is first colum
-                if i == 0:
-                    row_data = "| " + f"{number} {data:<{col_w-1}}"
-                else:
-                    row_data = "| " + f"{data:<{col_w}} "
-                print(row_data, end="")
-            print("|")
-
-        # bot
-        print(hon_line)
-
     os.system(CLEAR_SCREEN)
 
     # name of each column
@@ -209,7 +243,7 @@ def view_password():
                 name[2] = decrypt(passwords[i])
 
     else:
-        print("Not in choice! Try agin")
+        print("Not in choice! Try again")
         return
 
     os.system(CLEAR_SCREEN)
