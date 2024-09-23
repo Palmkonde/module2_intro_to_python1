@@ -194,7 +194,7 @@ def delete_password():
     create_ascii_table(headers, row)
 
     print("Which password do you want to delete?")
-    select = input("Please enter a name or number: ")
+    select = input("Please enter a name or number: ").lower()
 
     if select.isdigit() and (1 <= int(select) <= len(row)):
         select = int(select) - 1
@@ -207,7 +207,7 @@ def delete_password():
         return
 
     os.system(CLEAR_SCREEN)
-    print(f"{row[select][0]}'s deleted")
+    print(f"{row[select][0]}'s password deleted")
 
 
 def view_password():
@@ -231,7 +231,7 @@ def view_password():
     create_ascii_table(headers, row)
 
     print("\nWhich password do you want to show?")
-    select = input("Enter website name or number: ")
+    select = input("Enter website name or number: ").lower()
 
     if select.isdigit() and (1 <= int(select) <= len(row)):
         select = int(select) - 1
