@@ -1,9 +1,3 @@
-user_input = input()
-character = ""
+list_name = [1, 2, 3, 4, 5]
 
-for i in user_input:
-    character += i + "_"
-    print(character)
-
-
-print(character[:-1])
+print(list_name[third_input])
