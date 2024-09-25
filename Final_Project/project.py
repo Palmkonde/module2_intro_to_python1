@@ -48,7 +48,7 @@ IS_FOLDER_CREATED = False
 CLEAR_SCREEN = ""
 
 
-def welcome():
+def welcome() -> None:
     """ NEVERGONNAGIVEU UP NEVERGONNALET U DOWN"""
     os.system(CLEAR_SCREEN)
     print(r"""
@@ -92,7 +92,7 @@ def welcome():
   |_| \___/ \___/|_| \_\ |_| /_/   \_\____/____/  \_/\_/  \___/|_| \_\____/ """)
 
 
-def quit_the_program():
+def quit_the_program() -> None:
     """ THANK YOU """
     os.system(CLEAR_SCREEN)
     print(r"""
@@ -110,7 +110,7 @@ def quit_the_program():
     sys.exit()
 
 
-def add_password():
+def add_password() -> None:
     """ ADD username and password """
 
     os.system(CLEAR_SCREEN)
@@ -128,7 +128,7 @@ def add_password():
     DATA.update(data_injson)
 
 
-def create_ascii_table(headers, rows) -> None:
+def create_ascii_table(headers: list[str], rows: list[str]) -> None:
     """ table that will show your password """
 
     colum_width = []
@@ -171,7 +171,7 @@ def create_ascii_table(headers, rows) -> None:
     print(hon_line)
 
 
-def delete_password():
+def delete_password() -> None:
     """Delete from database """
     os.system(CLEAR_SCREEN)
 
@@ -195,10 +195,12 @@ def delete_password():
 
     create_ascii_table(headers, row)
 
+    # user_input which password that use want to delete
     print("Which password do you want to delete?")
     select = input("Please enter a name or number: ").lower()
     deleted = ""
 
+    # select is a number
     if select.isdigit() and (1 <= int(select) <= len(row)):
         select = int(select) - 1
         deleted = row[select][0]
@@ -215,10 +217,11 @@ def delete_password():
     print(f"{deleted}'s password deleted")
 
 
-def view_password():
+def view_password() -> None:
     """create an table to show you all password"""
     os.system(CLEAR_SCREEN)
 
+    # for now DATA contains only password that use for login
     if (not DATA) or len(DATA) == 1:
         print("There is nothing to show!!!")
         return
@@ -259,10 +262,11 @@ def view_password():
     create_ascii_table(headers, row)
 
 
-def initial_data():
-    """ function intialize data before run everythingelse """
+def initial_data() -> list[str, str, dict]:
+    """ function intialize data before run anything """
 
     # inital_OS
+    user_os = ""
     if os.name == "nt":
         user_os = "WINDOW"
 
@@ -276,6 +280,7 @@ def initial_data():
             data = json.load(file)
 
     # initail command base on user_os
+    clear_screeen = ""
     if user_os == "WINDOW":
         clear_screeen = "cls"
 
@@ -285,7 +290,7 @@ def initial_data():
     return [user_os, clear_screeen, data]
 
 
-def option():
+def option() -> None:
     """ main function to select action to do """
 
     os.system(CLEAR_SCREEN)
@@ -320,7 +325,7 @@ def option():
             quit_the_program()
 
 
-def first_time():
+def first_time() -> bool:
     """
         When user use this program first time
         we need to collect password for this program and create Key, folder, etc.
@@ -365,8 +370,20 @@ def first_time():
     return is_folder_created
 
 
-def encrypt(plain):
-    """ SECRET """
+def encrypt(plain: str) -> str:
+    """ 
+    function to encryption password
+     principle:
+        1. change each character to int according to ascii
+            ex. if input "A", character is 65
+        2. use XOR with key
+        3. then convert it to hex number
+            ex. plain = "ABC", we got [37, 27, 37]
+        4. concate it and convert to base 10
+            ex. [37, 27, 37] -> 372737 -> 3614519
+        5. then change it into base44 and respresent in index of Thai alphabet
+        6. reverse and put == for fun!!!
+    """
 
     with open(KEY_FILE, "r", encoding="utf-8") as file:
         key = file.readline()
@@ -391,8 +408,16 @@ def encrypt(plain):
     return result
 
 
-def decrypt(cipher):
-    """ SECRET """
+def decrypt(cipher: str) -> str:
+    """ function to decrypt password 
+
+        principle:
+            1. reverse and delete "=="
+            2. change it into base 10
+            3. change it into hex (some bug appear when 0 is first of the base 10 value)
+            4. seperate to each of hex value 
+            5. XOR with key and the convert to character
+    """
 
     with open(KEY_FILE, "r", encoding="utf-8") as file:
         key = file.readline()
@@ -408,6 +433,9 @@ def decrypt(cipher):
         tmp += (alphabet_l ** i) * alphabet.index(character)
     tmp = hex(tmp)[2:]
 
+    if len(tmp) % 2 != 0:
+        tmp = "0" + tmp
+
     fake_plain = []
     for i in range(0, len(tmp), 2):
         fake_plain.append(int(tmp[i:i + 2], 16))
@@ -418,7 +446,7 @@ def decrypt(cipher):
     return plain
 
 
-def login():
+def login() -> list[bool, str]:
     """ login second time check whether password is as same as before """
     user_password = ""
 
@@ -455,7 +483,7 @@ def login():
     return True, None
 
 
-def update_json():
+def update_json() -> None:
     """ update file password before end program """
 
     if USER_OS == "WINDOW":
