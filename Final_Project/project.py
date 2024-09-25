@@ -127,8 +127,6 @@ def add_password():
     }
     DATA.update(data_injson)
 
-    # TODO: in one website can contains many username and password
-
 
 def create_ascii_table(headers, rows) -> None:
     """ table that will show your password """
@@ -177,6 +175,10 @@ def delete_password():
     """Delete from database """
     os.system(CLEAR_SCREEN)
 
+    if len(DATA) == 1:
+        print("There is nothing to delete!!!")
+        return
+
     # name of each column
     headers = ["Website", "Username", "Password"]
 
@@ -195,24 +197,31 @@ def delete_password():
 
     print("Which password do you want to delete?")
     select = input("Please enter a name or number: ").lower()
+    deleted = ""
 
     if select.isdigit() and (1 <= int(select) <= len(row)):
         select = int(select) - 1
+        deleted = row[select][0]
         DATA.pop(row[select][0])
 
     elif select in DATA:
+        deleted = select
         DATA.pop(select)
     else:
         print("Not in choice! Try again")
         return
 
     os.system(CLEAR_SCREEN)
-    print(f"{row[select][0]}'s password deleted")
+    print(f"{deleted}'s password deleted")
 
 
 def view_password():
     """create an table to show you all password"""
     os.system(CLEAR_SCREEN)
+
+    if (not DATA) or len(DATA) == 1:
+        print("There is nothing to show!!!")
+        return
 
     # name of each column
     headers = ["Website", "Username", "Password"]
@@ -270,7 +279,7 @@ def initial_data():
     if user_os == "WINDOW":
         clear_screeen = "cls"
 
-    if user_os == "UNIX":
+    elif user_os == "UNIX":
         clear_screeen = "clear"
 
     return [user_os, clear_screeen, data]
@@ -297,16 +306,16 @@ def option():
             input("PLEASE TYPE ANYTHING TO CONTINUE")
             os.system(CLEAR_SCREEN)
 
-        if user_option in ("V", "VEIW"):
+        if user_option in ("V", "VIEW"):
             view_password()
 
-        if user_option in ("A", "ADD"):
+        elif user_option in ("A", "ADD"):
             add_password()
 
-        if user_option in ("D", "DELETE"):
+        elif user_option in ("D", "DELETE"):
             delete_password()
 
-        if user_option in ("Q", "QUIT"):
+        elif user_option in ("Q", "QUIT"):
             update_json()
             quit_the_program()
 
@@ -411,18 +420,20 @@ def decrypt(cipher):
 
 def login():
     """ login second time check whether password is as same as before """
+    user_password = ""
 
     # user first time
     if not (os.path.exists(PASSWORD_FILE) or os.path.isfile(PASSWORD_FILE)):
-        user_password = input("Please create new password: ")
-        again_password = input("Confirm again: ")
 
-        if user_password != again_password:
-            input("Wrong! Please try again")
-            quit_the_program()
+        while not user_password:
+            user_password = input("Please create new password: ")
 
+            if not user_password:
+                input("Password Can't be empty!!! type something to try again")
+                os.system(CLEAR_SCREEN)
         return True, user_password
 
+    # login
     user_password = input("Please login: ")
     stored_password = decrypt(DATA["userpassword"])
 
@@ -468,5 +479,4 @@ if __name__ == "__main__":
         DATA = {
             "userpassword": encrypt(intial_password)
         }
-
     option()
