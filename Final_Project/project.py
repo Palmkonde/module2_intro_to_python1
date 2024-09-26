@@ -22,23 +22,22 @@ import json
 import sys
 
 # Constant variable
-OPTION = ["V", "D", "A", "Q",
+OPTION = ("V", "D", "A", "Q",
           "VIEW", "ADD", "DELETE", "QUIT"
-          ]
+          )
 
 # folder
 CURRENT_DIR = os.getcwd()
 FOLDER_NAME = ".vetit"
-PATH_TO_STORE = CURRENT_DIR + "/" + FOLDER_NAME
-PASSWORD_FILE = PATH_TO_STORE + "/.userpassword.json"
-KEY_FILE = PATH_TO_STORE + "/.secret_key.key"
+PATH_TO_STORE = os.path.join(CURRENT_DIR, FOLDER_NAME)
+PASSWORD_FILE = "/".join([PATH_TO_STORE, ".userpassword.json"])
+KEY_FILE = "/".join([PATH_TO_STORE, ".secret_key.key"])
 
 # OS
 USER_OS = None
 
 # DATA
 DATA = {}
-KEY = ""
 
 # bool state
 IS_LOGIN = False
@@ -48,8 +47,16 @@ IS_FOLDER_CREATED = False
 CLEAR_SCREEN = ""
 
 
-def welcome() -> None:
-    """ NEVERGONNAGIVEU UP NEVERGONNALET U DOWN"""
+def dance_welcome() -> None:
+    """ 
+    Show NEVERGONNAGIVEU UP NEVERGONNALET U DOWN Boys 
+    Let him welcome you
+
+    Args: 
+        None
+    Returns: 
+        None
+    """
     os.system(CLEAR_SCREEN)
     print(r"""
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -93,7 +100,14 @@ def welcome() -> None:
 
 
 def quit_the_program() -> None:
-    """ THANK YOU """
+    """ 
+    THANK YOU and quit the program 
+
+    Args: 
+        None
+    Returns: 
+        None
+    """
     os.system(CLEAR_SCREEN)
     print(r"""
  _____ _   _    _    _   _ _  __ __   _____  _   _ _ _ _
@@ -110,14 +124,48 @@ def quit_the_program() -> None:
     sys.exit()
 
 
+def is_valid(text: str) -> bool:
+    """ 
+    to validate input 
+
+    Args: 
+        text (str): 
+            input to check than contain space or not
+
+    Returns:
+        is_valid (bool): 
+            True means valid False means invalid
+    """
+
+    if len(text) == 0:
+        return False
+
+    if " " in text:
+        return False
+
+    return True
+
+
 def add_password() -> None:
-    """ ADD username and password """
+    """ 
+    ADD username and password to database
+
+    Args: 
+        None
+
+    Returns: 
+        None
+    """
 
     os.system(CLEAR_SCREEN)
 
-    website = input("Please enter name of website: ").lower()
-    username = input("Please enter username: ")
-    password = input("Please enter password: ")
+    website = input("Please enter name of website: ").lower().strip()
+    username = input("Please enter username: ").strip()
+    password = input("Please enter password: ").strip()
+
+    if not (is_valid(website) or is_valid(username) or is_valid(password)):
+        print("There are some invalid password")
+        return
 
     data_injson = {
         website: {
@@ -128,8 +176,18 @@ def add_password() -> None:
     DATA.update(data_injson)
 
 
-def create_ascii_table(headers: list[str], rows: list[str]) -> None:
-    """ table that will show your password """
+def create_ascii_table(headers: list[str], rows: list[list[str]]) -> None:
+    """ 
+    table that will show your password 
+    Args:
+        headers (list[str]):  
+            column name
+        rows (list[str]): 
+            each row of Data
+
+    Returns: 
+        None
+    """
 
     colum_width = []
     for i, col in enumerate(zip(headers, *rows)):
@@ -159,7 +217,7 @@ def create_ascii_table(headers: list[str], rows: list[str]) -> None:
     # each row
     for number, row in enumerate(rows, 1):
         for i, (data, col_w) in enumerate(zip(row, colum_width)):
-            # if it is first colum
+            # if it is first column
             if i == 0:
                 row_data = "| " + f"{number} {data:<{col_w-1}}"
             else:
@@ -172,7 +230,15 @@ def create_ascii_table(headers: list[str], rows: list[str]) -> None:
 
 
 def delete_password() -> None:
-    """Delete from database """
+    """
+    Delete from database 
+
+    Args: 
+        None
+
+    Return: 
+        None
+    """
     os.system(CLEAR_SCREEN)
 
     if len(DATA) == 1:
@@ -197,7 +263,12 @@ def delete_password() -> None:
 
     # user_input which password that use want to delete
     print("Which password do you want to delete?")
-    select = input("Please enter a name or number: ").lower()
+    select = input("Please enter website name or number: ").lower().strip()
+
+    if not is_valid(select):
+        print("There are some invalid try again")
+        return
+
     deleted = ""
 
     # select is a number
@@ -218,7 +289,15 @@ def delete_password() -> None:
 
 
 def view_password() -> None:
-    """create an table to show you all password"""
+    """
+    create an table to show you all password
+
+    Args: 
+        None
+
+    Returns: 
+        None
+    """
     os.system(CLEAR_SCREEN)
 
     # for now DATA contains only password that use for login
@@ -243,7 +322,7 @@ def view_password() -> None:
     create_ascii_table(headers, row)
 
     print("\nWhich password do you want to show?")
-    select = input("Enter website name or number: ").lower()
+    select = input("Enter website name or number: ").lower().strip()
 
     if select.isdigit() and (1 <= int(select) <= len(row)):
         select = int(select) - 1
@@ -262,8 +341,22 @@ def view_password() -> None:
     create_ascii_table(headers, row)
 
 
-def initial_data() -> list[str, str, dict]:
-    """ function intialize data before run anything """
+def load_initial_data() -> list[str, str, dict]:
+    """ 
+    function intialize data before run anything 
+
+    Args: 
+        None
+
+    Returns:
+        list: a list that contains these elements:
+            user_os (str):
+                specify user_os whether they use UNIX or WINDOW
+            clear_screen (str):
+                select between "cls" and "clear" by their OS
+            data (dict):
+                Load Data from JSON file
+    """
 
     # inital_OS
     user_os = ""
@@ -290,8 +383,16 @@ def initial_data() -> list[str, str, dict]:
     return [user_os, clear_screeen, data]
 
 
-def option() -> None:
-    """ main function to select action to do """
+def select_option() -> None:
+    """ 
+    main function to select action to do 
+
+    Args: 
+        None
+
+    Return: 
+        None
+    """
 
     os.system(CLEAR_SCREEN)
 
@@ -308,7 +409,7 @@ def option() -> None:
         user_option = input().upper()
         if not user_option in OPTION:
             print("It is NOT in choices!!!")
-            input("PLEASE TYPE ANYTHING TO CONTINUE")
+            input("PLEASE ENTER TO CONTINUE")
             os.system(CLEAR_SCREEN)
 
         if user_option in ("V", "VIEW"):
@@ -325,10 +426,17 @@ def option() -> None:
             quit_the_program()
 
 
-def first_time() -> bool:
+def run_first_time() -> bool:
     """
-        When user use this program first time
-        we need to collect password for this program and create Key, folder, etc.
+    When user use this program first time
+    we need to collect password for this program and create Key, folder, etc
+
+    Args: 
+        None
+
+    Returns:
+        is_folder_created (bool):
+            have folder .vetit or not
     """
 
     is_folder_created = False
@@ -383,6 +491,14 @@ def encrypt(plain: str) -> str:
             ex. [37, 27, 37] -> 372737 -> 3614519
         5. then change it into base44 and respresent in index of Thai alphabet
         6. reverse and put == for fun!!!
+
+    Args:
+        plain (str):
+            Text that you want to encrypt
+
+    Returns:
+        result (str): 
+            Encrypted Text
     """
 
     with open(KEY_FILE, "r", encoding="utf-8") as file:
@@ -409,14 +525,24 @@ def encrypt(plain: str) -> str:
 
 
 def decrypt(cipher: str) -> str:
-    """ function to decrypt password 
+    """ 
+    function to decrypt password 
 
-        principle:
-            1. reverse and delete "=="
-            2. change it into base 10
-            3. change it into hex (some bug appear when 0 is first of the base 10 value)
-            4. seperate to each of hex value 
-            5. XOR with key and the convert to character
+    principle:
+        1. reverse and delete "=="
+        2. change it into base 10
+        3. change it into hex 
+            (some bug appear when 0 is first of the base 10 value)
+        4. seperate to each of hex value 
+        5. XOR with key and the convert to character
+
+    Args:
+        cipher (str):
+            Encrypted text
+    Returns:
+        plain (str):
+            plain text
+
     """
 
     with open(KEY_FILE, "r", encoding="utf-8") as file:
@@ -446,9 +572,22 @@ def decrypt(cipher: str) -> str:
     return plain
 
 
-def login() -> list[bool, str]:
-    """ login second time check whether password is as same as before """
-    user_password = ""
+def login() -> list[bool, str | None]:
+    """ 
+    login second time check whether password is as same as before 
+    Args: 
+        None
+
+    Returns:
+        list: that contains these elements:
+            is_login (bool): 
+                check that user logged in
+            user_password (str | None):  
+                user_password might be None unless it user first time
+
+    """
+    user_password = None
+    is_login = False
 
     # user first time
     if not (os.path.exists(PASSWORD_FILE) or os.path.isfile(PASSWORD_FILE)):
@@ -457,12 +596,16 @@ def login() -> list[bool, str]:
             user_password = input("Please create new password: ")
 
             if not user_password:
-                input("Password Can't be empty!!! type something to try again")
+                input("Password Can't be empty!!! ENTER to try again")
                 os.system(CLEAR_SCREEN)
-        return True, user_password
+
+            if is_valid(user_password):
+                input("Password can't contains space!!! ENTER to try again")
+                os.system(CLEAR_SCREEN)
+        return is_login, user_password
 
     # login
-    user_password = input("Please login: ")
+    user_password = input("Please login with your password: ")
     stored_password = decrypt(DATA["userpassword"])
 
     if stored_password != user_password:
@@ -477,14 +620,22 @@ def login() -> list[bool, str]:
   | | |  _ < | |    / ___ \ |_| |/ ___ \ | || |\  |
   |_| |_| \_\|_|   /_/   \_\____/_/   \_\___|_| \_|""")
 
-        input("Type any key to continue")
+        input("Please ENTER to continue")
         sys.exit()
 
-    return True, None
+    return is_login, user_password
 
 
 def update_json() -> None:
-    """ update file password before end program """
+    """ 
+    update file password before end program 
+
+    Args: 
+        None
+
+    Returns: 
+        None
+    """
 
     if USER_OS == "WINDOW":
         os.system(f"attrib -h {PASSWORD_FILE}")
@@ -497,9 +648,9 @@ def update_json() -> None:
 
 
 if __name__ == "__main__":
-    welcome()
-    IS_FOLDER_CREATED = first_time()
-    USER_OS, CLEAR_SCREEN, DATA = initial_data()
+    dance_welcome()
+    IS_FOLDER_CREATED = run_first_time()
+    USER_OS, CLEAR_SCREEN, DATA = load_initial_data()
     IS_LOGIN, intial_password = login()
 
     # mean it's user first time
@@ -507,4 +658,4 @@ if __name__ == "__main__":
         DATA = {
             "userpassword": encrypt(intial_password)
         }
-    option()
+    select_option()
