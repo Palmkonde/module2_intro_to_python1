@@ -182,7 +182,7 @@ def create_ascii_table(headers: list[str], rows: list[list[str]]) -> None:
     Args:
         headers (list[str]):  
             column name
-        rows (list[str]): 
+        rows (list[list[str]]): 
             each row of Data
 
     Returns: 
@@ -481,16 +481,17 @@ def run_first_time() -> bool:
 def encrypt(plain: str) -> str:
     """ 
     function to encryption password
-     principle:
-        1. change each character to int according to ascii
-            ex. if input "A", character is 65
-        2. use XOR with key
-        3. then convert it to hex number
-            ex. plain = "ABC", we got [37, 27, 37]
-        4. concate it and convert to base 10
-            ex. [37, 27, 37] -> 372737 -> 3614519
-        5. then change it into base44 and respresent in index of Thai alphabet
-        6. reverse and put == for fun!!!
+
+    principle
+    1. change each character to int according to ascii
+        ex. if input "A", character is 65
+    2. use XOR with key
+    3. then convert it to hex number
+        ex. plain = "ABC", we got [37, 27, 37]
+    4. concate it and convert to base 10
+        ex. [37, 27, 37] -> 372737 -> 3614519
+    5. then change it into base44 and respresent in index of Thai alphabet
+    6. reverse and put "==" for fun!!!
 
     Args:
         plain (str):
@@ -528,20 +529,20 @@ def decrypt(cipher: str) -> str:
     """ 
     function to decrypt password 
 
-    principle:
-        1. reverse and delete "=="
-        2. change it into base 10
-        3. change it into hex 
-            (some bug appear when 0 is first of the base 10 value)
-        4. seperate to each of hex value 
-        5. XOR with key and the convert to character
+    principle
+    1. reverse and delete "=="
+    2. change it into base 10
+    3. change it into hex 
+        (some bug appear when 0 is first of the base 10 value)
+    4. seperate to each of hex value 
+    5. XOR with key and the convert to character
 
     Args:
         cipher (str):
-            Encrypted text
+            Encrypted_text
     Returns:
         plain (str):
-            plain text
+            plain_text
 
     """
 
@@ -593,20 +594,24 @@ def login() -> list[bool, str | None]:
     if not (os.path.exists(PASSWORD_FILE) or os.path.isfile(PASSWORD_FILE)):
 
         while not user_password:
-            user_password = input("Please create new password: ")
+            user_password = input("Please create new password: ").strip()
 
             if not user_password:
                 input("Password Can't be empty!!! ENTER to try again")
+                user_password = ""
                 os.system(CLEAR_SCREEN)
 
-            if is_valid(user_password):
+            elif not is_valid(user_password):
                 input("Password can't contains space!!! ENTER to try again")
+                user_password = ""
                 os.system(CLEAR_SCREEN)
-        return is_login, user_password
+
+        is_login = True
+        return [is_login, user_password]
 
     # login
     user_password = input("Please login with your password: ")
-    stored_password = decrypt(DATA["userpassword"])
+    stored_password = decrypt(DATA["userpassword"])  # bug bounty
 
     if stored_password != user_password:
         os.system(CLEAR_SCREEN)
@@ -623,7 +628,8 @@ def login() -> list[bool, str | None]:
         input("Please ENTER to continue")
         sys.exit()
 
-    return is_login, user_password
+    is_login = True
+    return [is_login, user_password]
 
 
 def update_json() -> None:
@@ -651,11 +657,11 @@ if __name__ == "__main__":
     dance_welcome()
     IS_FOLDER_CREATED = run_first_time()
     USER_OS, CLEAR_SCREEN, DATA = load_initial_data()
-    IS_LOGIN, intial_password = login()
+    IS_LOGIN, initial_password = login()
 
     # mean it's user first time
-    if intial_password:
+    if initial_password:
         DATA = {
-            "userpassword": encrypt(intial_password)
+            "userpassword": encrypt(initial_password)
         }
     select_option()
